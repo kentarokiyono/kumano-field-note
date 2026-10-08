@@ -890,7 +890,7 @@ export default function KumanoArchiveApp() {
               </button>
               <button
                 type="button"
-                onClick={() => setMobileTab('map')}
+                onClick={() => setMobileTab('map'); setTimeout(() => { leafletMapRef.current?.invalidateSize(); }, 60); setTimeout(() => { leafletMapRef.current?.invalidateSize(); }, 300);}
                 className={`px-3 py-1 rounded-sm transition ${
                   mobileTab === 'map' ? 'bg-[#2B2F38] text-[#FCFBF8] shadow-sm' : 'text-[#2B2F38] hover:opacity-75'
                 }`}
@@ -981,7 +981,7 @@ export default function KumanoArchiveApp() {
       <main className="flex-1 flex flex-col md:flex-row max-w-[1680px] w-full mx-auto relative items-start">
         <section
           className={`w-full md:w-[45%] md:h-[calc(100vh-62px)] md:sticky md:top-[62px] flex flex-col border-r border-[#E2DDD3] bg-[#FCFBF8] z-20 shrink-0 ${
-            mobileTab === 'map' ? 'block h-[calc(100vh-62px)]' : 'hidden md:flex'
+            mobileTab === 'map' ? 'flex flex-col w-full h-[calc(100dvh-115px)]' : 'hidden md:flex'
           }`}
         >
           <div className="bg-[#FCFBF8] border-b border-[#E2DDD3] px-4 py-2.5 flex items-center justify-between text-xs">
@@ -1022,7 +1022,7 @@ export default function KumanoArchiveApp() {
           </div>
 
           <div className="flex-1 relative w-full h-full min-h-[400px]">
-            <div ref={mapContainerRef} className="w-full h-full z-10" />
+            <div ref={mapContainerRef} className="absolute inset-0 w-full h-full z-10" />
 
             {isLegendOpen && (
               <div className="absolute top-3 left-3 z-20 bg-[#FCFBF8]/95 backdrop-blur-sm border border-[#DCD6C9] rounded-md p-4 shadow-lg max-w-xs text-xs font-sans">
@@ -1405,7 +1405,7 @@ export default function KumanoArchiveApp() {
                         onClick={(e) => {
                           e.stopPropagation();
                           handleSelectRecord(record.id, true);
-                          setMobileTab('map');
+                          setMobileTab('map'); setTimeout(() => { leafletMapRef.current?.invalidateSize(); }, 60); setTimeout(() => { leafletMapRef.current?.invalidateSize(); }, 300);;
                         }}
                         className="inline-flex items-center gap-1.5 text-[#2B2F38] hover:opacity-75 font-bold text-xs"
                       >
