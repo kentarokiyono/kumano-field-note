@@ -1167,6 +1167,46 @@ export default function KumanoFutureLabOS() {
     );
   };
 
+  // 16-bit PCM WAV エンコーダー (SafariのMediaRecorderクラッシュを完全回避)
+  const encodeWav = (samples: Float32Array[], sampleRate: number): Blob => {
+    let totalLen = 0;
+    for (let i = 0; i < samples.length; i++) totalLen += samples[i].length;
+    const merged = new Float32Array(totalLen);
+    let offset = 0;
+    for (let i = 0; i < samples.length; i++) {
+      merged.set(samples[i], offset);
+      offset += samples[i].length;
+    }
+
+    const buffer = new ArrayBuffer(44 + merged.length * 2);
+    const view = new DataView(buffer);
+    const writeStr = (off: number, str: string) => {
+      for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i));
+    };
+
+    writeStr(0, "RIFF");
+    view.setUint32(4, 36 + merged.length * 2, true);
+    writeStr(8, "WAVE");
+    writeStr(12, "fmt ");
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true); // PCM
+    view.setUint16(22, 1, true); // モノラル
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeStr(36, "data");
+    view.setUint32(40, merged.length * 2, true);
+
+    let idx = 44;
+    for (let i = 0; i < merged.length; i++) {
+      let s = Math.max(-1, Math.min(1, merged[i]));
+      view.setInt16(idx, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+      idx += 2;
+    }
+    return new Blob([view], { type: "audio/wav" });
+  };
+
   const startRecording = async () => {
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -1175,37 +1215,34 @@ export default function KumanoFutureLabOS() {
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioChunksRef.current = [];
-
-      // iPad/Safari クラッシュ防止: ブラウザが対応している形式のみを判定
-      let options = undefined;
-      if (typeof MediaRecorder !== "undefined" && typeof MediaRecorder.isTypeSupported === "function") {
-        if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
-          options = { mimeType: "audio/webm;codecs=opus" };
-        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
-          options = { mimeType: "audio/mp4" };
-        }
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const audioCtx = new AudioContextClass();
+      if (audioCtx.state === "suspended") {
+        await audioCtx.resume();
       }
 
-      let mediaRecorder;
-      try {
-        mediaRecorder = options ? new MediaRecorder(stream, options) : new MediaRecorder(stream);
-      } catch (e) {
-        mediaRecorder = new MediaRecorder(stream);
-      }
+      const source = audioCtx.createMediaStreamSource(stream);
+      const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+      const audioChunks: Float32Array[] = [];
 
-      recordedMimeTypeRef.current = mediaRecorder.mimeType || "audio/mp4";
-      mediaRecorderRef.current = mediaRecorder;
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) audioChunksRef.current.push(event.data);
+      processor.onaudioprocess = (e: any) => {
+        const inputData = e.inputBuffer.getChannelData(0);
+        audioChunks.push(new Float32Array(inputData));
       };
 
-      mediaRecorder.onerror = () => {
-        stopRecording();
-      };
+      source.connect(processor);
+      processor.connect(audioCtx.destination);
 
-      mediaRecorder.start();
+      mediaRecorderRef.current = {
+        audioCtx,
+        stream,
+        source,
+        processor,
+        chunks: audioChunks,
+        sampleRate: audioCtx.sampleRate,
+      } as any;
+
+      recordedMimeTypeRef.current = "audio/wav";
       setIsRecording(true);
       setRecordingSeconds(0);
       if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
@@ -1227,34 +1264,26 @@ export default function KumanoFutureLabOS() {
     const durationStr = String(mins).padStart(2, "0") + ":" + String(secs).padStart(2, "0");
     const finalDuration = durationStr === "00:00" ? "00:05" : durationStr;
 
-    const recorder = mediaRecorderRef.current;
-    if (recorder && recorder.state !== "inactive") {
-      recorder.onstop = async () => {
-        const mimeType = recorder.mimeType || recordedMimeTypeRef.current || "audio/mp4";
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-        const audioBlobId = "audio-" + Date.now();
-        try {
-          const checksum = await storeMediaBlob(audioBlobId, audioBlob, mimeType);
-          const audioUrl = URL.createObjectURL(audioBlob);
-          openNewNodeEditor(audioUrl, finalDuration, audioBlobId, checksum, mimeType);
-        } catch (err) {
-          console.error("IndexedDB 保存エラー:", err);
-          showToast("⚠️ 音声の保存に失敗しました");
-        }
-
-        try {
-          if (recorder.stream) {
-            recorder.stream.getTracks().forEach((track) => track.stop());
-          }
-        } catch (e) {}
-      };
+    const rec = mediaRecorderRef.current as any;
+    if (rec && rec.processor && rec.audioCtx) {
       try {
-        recorder.stop();
-      } catch (e) {
-        if (recorder.stream) {
-          recorder.stream.getTracks().forEach((track) => track.stop());
-        }
+        rec.processor.disconnect();
+        rec.source.disconnect();
+        rec.stream.getTracks().forEach((track: any) => track.stop());
+        rec.audioCtx.close().catch(() => {});
+      } catch (e) {}
+
+      const audioBlob = encodeWav(rec.chunks || [], rec.sampleRate || 44100);
+      const audioBlobId = "audio-" + Date.now();
+      try {
+        const checksum = await storeMediaBlob(audioBlobId, audioBlob, "audio/wav");
+        const audioUrl = URL.createObjectURL(audioBlob);
+        openNewNodeEditor(audioUrl, finalDuration, audioBlobId, checksum, "audio/wav");
+      } catch (err) {
+        console.error("IndexedDB 保存エラー:", err);
+        showToast("⚠️ 音声の保存に失敗しました");
       }
+      mediaRecorderRef.current = null;
     } else {
       openNewNodeEditor(undefined, finalDuration);
     }
