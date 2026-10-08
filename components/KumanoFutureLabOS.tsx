@@ -1218,7 +1218,7 @@ export default function KumanoFutureLabOS() {
   
   
   // PCM WAV エンコーダー（Safariが絶対にクラッシュしない録音方式）
-  const encodeWavBlob = (samples, sampleRate) => {
+  const encodeWavBlob = (samples: any, sampleRate: any) => {
     let totalLen = 0;
     for (let i = 0; i < samples.length; i++) totalLen += samples[i].length;
     const merged = new Float32Array(totalLen);
@@ -1229,7 +1229,7 @@ export default function KumanoFutureLabOS() {
     }
     const buffer = new ArrayBuffer(44 + merged.length * 2);
     const view = new DataView(buffer);
-    const writeString = (off, str) => {
+    const writeString = (off: any, str: any) => {
       for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i));
     };
     writeString(0, "RIFF");
@@ -2519,7 +2519,7 @@ export default function KumanoFutureLabOS() {
                                 backgroundColor: `${cfg.color}0D`
                               }}
                             >
-                              {cfg.label}
+                              {typeof cfg.label === 'object' ? (cfg.label?.ja || JSON.stringify(cfg.label)) : cfg.label}
                             </span>
                           );
                         })()}
@@ -2819,7 +2819,7 @@ export default function KumanoFutureLabOS() {
                               backgroundColor: `${cfg.color}0D`
                             }}
                           >
-                            {cfg.label}
+                            {typeof cfg.label === 'object' ? (cfg.label?.ja || JSON.stringify(cfg.label)) : cfg.label}
                           </span>
                           <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#2B2F38] text-[#FCFBF8]">
                             {item.elevation}
