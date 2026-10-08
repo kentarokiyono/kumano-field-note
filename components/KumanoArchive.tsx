@@ -858,7 +858,7 @@ export default function KumanoArchiveApp() {
     : '';
 
   return (
-    <div className="min-h-screen bg-[#F8F6F0] text-[#2B2F38] font-sans antialiased flex flex-col selection:bg-[#2B2F38] selection:text-[#FCFBF8]">
+    <div className="h-[100dvh] overflow-y-auto bg-[#F8F6F0] text-[#2B2F38] font-sans antialiased flex flex-col selection:bg-[#2B2F38] selection:text-[#FCFBF8]">
       <header className="sticky top-0 z-50 bg-[#FCFBF8]/95 backdrop-blur-sm border-b border-[#E2DDD3] px-4 md:px-8 py-2.5 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
         <div className="max-w-[1680px] mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
