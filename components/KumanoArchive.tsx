@@ -943,7 +943,7 @@ export default function KumanoArchiveApp() {
                 ) : (
                   areas.map((area) => {
                     const aName = lang === 'en' ? area.nameEn || area.name : area.name;
-                    const aTown = lang === 'en' ? area.townEn || area.town : (area.town.split('東牟婁郡')[1] || area.town);
+                    const aTown = lang === 'en' ? area.townEn || area.town : ((area.town ? (area.town.split("東牟婁郡")[1] || area.town) : ""));
                     return (
                       <option key={area.id} value={area.id}>
                         {aName} ({aTown})
