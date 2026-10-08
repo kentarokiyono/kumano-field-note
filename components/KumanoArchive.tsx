@@ -890,7 +890,7 @@ export default function KumanoArchiveApp() {
               </button>
               <button
                 type="button"
-                onClick={() => setMobileTab('map'); setTimeout(() => { leafletMapRef.current?.invalidateSize(); }, 60); setTimeout(() => { leafletMapRef.current?.invalidateSize(); }, 300);}
+                onClick={() => { setMobileTab('map'); setTimeout(() => { leafletMapRef.current?.invalidateSize(); }, 60); setTimeout(() => { leafletMapRef.current?.invalidateSize(); }, 300); }}
                 className={`px-3 py-1 rounded-sm transition ${
                   mobileTab === 'map' ? 'bg-[#2B2F38] text-[#FCFBF8] shadow-sm' : 'text-[#2B2F38] hover:opacity-75'
                 }`}
@@ -1405,7 +1405,7 @@ export default function KumanoArchiveApp() {
                         onClick={(e) => {
                           e.stopPropagation();
                           handleSelectRecord(record.id, true);
-                          setMobileTab('map'); setTimeout(() => { leafletMapRef.current?.invalidateSize(); }, 60); setTimeout(() => { leafletMapRef.current?.invalidateSize(); }, 300);;
+                onClick={() => { setMobileTab('map'); setTimeout(() => { leafletMapRef.current?.invalidateSize(); }, 60); setTimeout(() => { leafletMapRef.current?.invalidateSize(); }, 300); }}
                         }}
                         className="inline-flex items-center gap-1.5 text-[#2B2F38] hover:opacity-75 font-bold text-xs"
                       >
