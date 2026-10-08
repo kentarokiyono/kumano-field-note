@@ -1,24 +1,30 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { BookOpen } from 'lucide-react';
 
-// Leaflet（地図）はブラウザ専用のため、SSR（サーバーレンダリング）を無効化して読み込む
 const KumanoFutureLabOS = dynamic(
   () => import('../components/KumanoFutureLabOS'),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="w-full h-screen flex flex-col items-center justify-center bg-[#F8F6F0] text-[#2B2F38]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2B2F38] mb-3"></div>
-        <p className="text-xs font-mono font-bold tracking-wider uppercase">Loading Kumano Field OS...</p>
-      </div>
-    ),
-  }
+  { ssr: false }
 );
 
 export default function Home() {
   return (
-    <main className="w-full h-screen overflow-hidden bg-[#F8F6F0]">
+    <main className="relative w-full h-screen overflow-hidden bg-[#F8F6F0]">
+      {/* デジタル図書室への移動ボタン */}
+      <div className="fixed top-2.5 right-14 md:right-24 z-[9999]">
+        <a
+          href="/archive"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#2B2F38] hover:bg-[#3A3F4B] text-[#FCFBF8] border border-[#2B2F38] rounded-md text-xs font-semibold shadow-md transition-all active:scale-95"
+          title="デジタル図書室（アーカイブ）を開く"
+        >
+          <BookOpen className="w-3.5 h-3.5 text-[#FCFBF8]" />
+          <span className="hidden sm:inline">デジタル図書室</span>
+          <span className="sm:hidden">図書室</span>
+          <span>→</span>
+        </a>
+      </div>
+
       <KumanoFutureLabOS />
     </main>
   );

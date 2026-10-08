@@ -1,3 +1,0 @@
-(()=>{"use strict";module.exports=[60350,a=>{var b=a.i(87924);let c=(0,a.i(19721).default)(async()=>{},{loadableGenerated:{modules:[82370]},ssr:!1,loading:()=>(0,b.jsxs)("div",{className:"w-full h-screen flex flex-col items-center justify-center bg-[#F8F6F0] text-[#2B2F38]",children:[(0,b.jsx)("div",{className:"animate-spin rounded-full h-8 w-8 border-b-2 border-[#2B2F38] mb-3"}),(0,b.jsx)("p",{className:"text-xs font-mono font-bold tracking-wider uppercase",children:"Loading Kumano Field OS..."})]})});a.s(["default",0,function(){return(0,b.jsx)("main",{className:"w-full h-screen overflow-hidden bg-[#F8F6F0]",children:(0,b.jsx)(c,{})})}])},33354,(a,b,c)=>{c._=function(a){return a&&a.__esModule?a:{default:a}}}]})();
-
-//# sourceMappingURL=_12gzn_tgq2f1b._.js.map
