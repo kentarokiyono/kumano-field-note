@@ -1208,8 +1208,7 @@ export default function KumanoFutureLabOS() {
   };
 
   // iOS/Safariで絶対に落ちないハイブリッド録音エンジン
-  const nativeAudioInputRef = useRef<HTMLInputElement>(null);
-
+  
   const handleNativeAudioFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1232,57 +1231,51 @@ export default function KumanoFutureLabOS() {
 
   const startRecording = async () => {
     try {
+      showToast("マイクを初期化中...");
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        showToast("マイク入力に対応していません");
+        alert("ブラウザがマイク録音に対応していません");
         return;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+        }
+      });
+
       audioChunksRef.current = [];
 
-      // Safari/iOSクラッシュ防止：SafariではmimeTypeオプションを一切渡さないのが鉄則
-      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) ||
-        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-
-      let options = undefined;
-      if (!isSafari && typeof MediaRecorder !== "undefined" && typeof MediaRecorder.isTypeSupported === "function") {
-        if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
-          options = { mimeType: "audio/webm;codecs=opus" };
-        } else if (MediaRecorder.isTypeSupported("audio/webm")) {
-          options = { mimeType: "audio/webm" };
-        }
-      }
-
-      let mediaRecorder;
+      // Safari/iOSクラッシュ防止：MIMEオプションは一切指定せずブラウザ標準に委ねる
+      let recorder;
       try {
-        mediaRecorder = options ? new MediaRecorder(stream, options) : new MediaRecorder(stream);
-      } catch (e) {
-        mediaRecorder = new MediaRecorder(stream);
+        recorder = new MediaRecorder(stream);
+      } catch (recErr) {
+        alert("MediaRecorder初期化失敗: " + recErr.message);
+        return;
       }
 
-      recordedMimeTypeRef.current = mediaRecorder.mimeType || (isSafari ? "audio/mp4" : "audio/webm");
-      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorderRef.current = recorder;
+      recordedMimeTypeRef.current = recorder.mimeType || "audio/mp4";
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
         }
       };
 
-      mediaRecorder.onerror = (err) => {
-        console.warn("録音エラー:", err);
+      recorder.onerror = (e) => {
+        alert("録音エラー: " + JSON.stringify(e));
       };
 
-      mediaRecorder.start();
+      recorder.start(1000); // 1秒ごとにデータを蓄積
       setIsRecording(true);
       setRecordingSeconds(0);
       if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
       recordingTimerRef.current = setInterval(() => setRecordingSeconds((prev) => prev + 1), 1000);
       showToast("音声聞き書きを録音中");
     } catch (err) {
-      console.warn("マイク取得エラー:", err);
-      showToast("マイクへのアクセスが拒否されました");
+      alert("マイク許可エラー: " + err.name + " - " + err.message);
     }
   };
 
@@ -1299,16 +1292,15 @@ export default function KumanoFutureLabOS() {
     const recorder = mediaRecorderRef.current;
     if (recorder && recorder.state !== "inactive") {
       recorder.onstop = async () => {
-        const mimeType = recorder.mimeType || recordedMimeTypeRef.current || "audio/mp4";
-        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        const mime = recorder.mimeType || recordedMimeTypeRef.current || "audio/mp4";
+        const audioBlob = new Blob(audioChunksRef.current, { type: mime });
         const audioBlobId = "audio-" + Date.now();
         try {
-          const checksum = await storeMediaBlob(audioBlobId, audioBlob, mimeType);
+          const checksum = await storeMediaBlob(audioBlobId, audioBlob, mime);
           const audioUrl = URL.createObjectURL(audioBlob);
-          openNewNodeEditor(audioUrl, finalDuration, audioBlobId, checksum, mimeType);
+          openNewNodeEditor(audioUrl, finalDuration, audioBlobId, checksum, mime);
         } catch (err) {
-          console.error("IndexedDB 保存エラー:", err);
-          showToast("⚠️ 音声の保存に失敗しました");
+          alert("保存エラー: " + err.message);
         }
 
         try {
