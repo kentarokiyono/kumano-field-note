@@ -1,10 +1,3 @@
-
-// 秒数を 00:00 形式にフォーマットする安全なヘルパー関数
-function formatTime(totalSeconds: number): string {
-  const m = Math.floor(totalSeconds / 60);
-  const s = totalSeconds % 60;
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-}
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
