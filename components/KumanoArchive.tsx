@@ -1405,7 +1405,7 @@ export default function KumanoArchiveApp() {
                         onClick={(e) => {
                           e.stopPropagation();
                           handleSelectRecord(record.id, true);
-                onClick={() => { setMobileTab('map'); setTimeout(() => { leafletMapRef.current?.invalidateSize(); }, 60); setTimeout(() => { leafletMapRef.current?.invalidateSize(); }, 300); }}
+                          setMobileTab('map');
                         }}
                         className="inline-flex items-center gap-1.5 text-[#2B2F38] hover:opacity-75 font-bold text-xs"
                       >
