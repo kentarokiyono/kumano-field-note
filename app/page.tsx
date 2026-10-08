@@ -4,7 +4,6 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import { BookOpen } from 'lucide-react';
 
-// エラーが起きても画面が真っ白にならず、何が原因か日本語で表示するガード
 class SafeBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
     super(props);
@@ -37,11 +36,8 @@ class SafeBoundary extends Component<{ children: ReactNode }, { hasError: boolea
   }
 }
 
-// SSRを安全にオフにして読み込み
 const KumanoFutureLabOS = dynamic(
-  () => import('../components/KumanoFutureLabOS').then((mod) => {
-    return mod.default || mod.KumanoFutureLabOS || mod;
-  }),
+  () => import('../components/KumanoFutureLabOS').then((mod) => mod.default || mod.KumanoFutureLabOS || mod),
   {
     ssr: false,
     loading: () => (
@@ -56,8 +52,8 @@ const KumanoFutureLabOS = dynamic(
 export default function Home() {
   return (
     <main className="relative w-full h-screen overflow-hidden bg-[#F8F6F0]">
-      {/* デジタル図書室ボタン：Gather.townと被らないよう、画面右上ではなく「画面上部の中央（タイトル横）」へ配置 */}
-      <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9999] pointer-events-auto">
+      {/* 1. PC / iPad（広い画面）: ヘッダー中央に配置 */}
+      <div className="hidden md:block fixed top-2.5 left-1/2 -translate-x-1/2 z-[9999] pointer-events-auto">
         <a
           href="/archive"
           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#2B2F38]/90 hover:bg-[#2B2F38] backdrop-blur-sm text-[#FCFBF8] border border-[#2B2F38] rounded-full text-xs font-semibold shadow-lg transition-all active:scale-95"
@@ -65,6 +61,19 @@ export default function Home() {
         >
           <BookOpen className="w-3.5 h-3.5 text-[#FCFBF8]" />
           <span>デジタル図書室</span>
+          <span>→</span>
+        </a>
+      </div>
+
+      {/* 2. スマホ（狭い画面）: ヘッダーの密集を避け、画面右下（下部バーの上）にフローティング配置 */}
+      <div className="md:hidden fixed bottom-20 right-3 z-[9999] pointer-events-auto">
+        <a
+          href="/archive"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#2B2F38]/95 hover:bg-[#2B2F38] backdrop-blur-md text-[#FCFBF8] border border-[#FCFBF8]/30 rounded-full text-xs font-bold shadow-2xl transition-all active:scale-95"
+          title="デジタル図書室を開く"
+        >
+          <BookOpen className="w-4 h-4 text-[#FCFBF8]" />
+          <span>図書室</span>
           <span>→</span>
         </a>
       </div>
