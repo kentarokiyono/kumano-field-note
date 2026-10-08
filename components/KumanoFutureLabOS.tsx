@@ -1,5 +1,18 @@
 'use client';
 
+// 時間整形ヘルパー関数（ホイスティング対応・エラー回避）
+function formatTime(seconds) {
+  if (seconds === undefined || seconds === null || isNaN(Number(seconds))) return '00:00';
+  const secNum = typeof seconds === 'string' ? parseInt(seconds, 10) || 0 : Math.floor(Number(seconds));
+  const m = Math.floor(secNum / 60);
+  const s = secNum % 60;
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+if (typeof window !== 'undefined') {
+  window.formatTime = formatTime;
+}
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Mic,
