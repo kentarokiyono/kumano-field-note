@@ -1,3 +1,14 @@
+
+function calcDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371000;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 'use client';
 
 // 時間整形ヘルパー関数（ホイスティング対応・エラー回避）
@@ -549,6 +560,7 @@ export default function KumanoFutureLabOS() {
   const tileLayerRef = useRef<any>(null);
   const tsunamiLayerRef = useRef<any>(null);
   const trackPolylineRef = useRef<any>(null);
+  const trackDotsLayerRef = useRef<any>(null);
   const userMarkerRef = useRef<any>(null);
   const nodeMarkersMapRef = useRef<{ [key: string]: any }>({});
 
@@ -1031,8 +1043,23 @@ export default function KumanoFutureLabOS() {
 
   useEffect(() => {
     if (trackPolylineRef.current) {
-      const latLngs = trackCoordinates.map((c) => [c[1], c[0]]);
-      trackPolylineRef.current.setLatLngs(latLngs);
+      trackPolylineRef.current.setStyle({ color: '#0284C7', weight: 1.5, opacity: 0.35, dashArray: '3, 6' });
+      trackPolylineRef.current.setLatLngs(trackCoordinates.map((c: any) => [c[1], c[0]]));
+    }
+    const win = window as any;
+    if (trackDotsLayerRef.current && win.L) {
+      trackDotsLayerRef.current.clearLayers();
+      trackCoordinates.forEach((c: any, idx: number) => {
+        if (idx > 0) {
+          win.L.circleMarker([c[1], c[0]], {
+            radius: 3.5,
+            color: '#0284C7',
+            weight: 1.5,
+            fillColor: '#FFFFFF',
+            fillOpacity: 0.95
+          }).addTo(trackDotsLayerRef.current);
+        }
+      });
     }
     if (userMarkerRef.current) {
       userMarkerRef.current.setLatLng([currentCoords[1], currentCoords[0]]);
@@ -1112,12 +1139,18 @@ export default function KumanoFutureLabOS() {
 
           setCurrentCoords(newLngLat);
           setGpsAccuracy(accuracy);
+          if (pos.coords.accuracy > 35) return; // 精度35m超はジッター防止のためプロットスキップ
+          setGpsAccuracy(accuracy);
           setLastFixTime(new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
 
-          setTrackCoordinates((prev) => {
+          setTrackCoordinates((prev: any) => {
             const last = prev[prev.length - 1];
-            if (last && last[0] === newLngLat[0] && last[1] === newLngLat[1]) {
-              return prev;
+            if (last) {
+              const movedMeters = calcDistanceMeters(last[1], last[0], newLngLat[1], newLngLat[0]);
+              // 3.5m未満の揺らぎ（静止中のブレ）はプロットしない
+              if (movedMeters < 3.5) {
+                return prev;
+              }
             }
             return [...prev, newLngLat];
           });
