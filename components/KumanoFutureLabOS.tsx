@@ -1,3 +1,4 @@
+'use client';
 
 // 秒数を 00:00 形式にフォーマットする安全なヘルパー関数
 function formatTime(totalSeconds: number): string {
@@ -5,7 +6,6 @@ function formatTime(totalSeconds: number): string {
   const s = totalSeconds % 60;
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
-'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -47,7 +47,7 @@ function calcDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: numb
   const R = 6371000;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
@@ -1035,26 +1035,25 @@ export default function KumanoFutureLabOS() {
   }, [nodes, activeCategoryFilter, currentAreaId, selectedNode]);
 
   useEffect(() => {
-    const win = window as any;
-    const L = win?.L;
     if (trackPolylineRef.current) {
-      trackPolylineRef.current.setStyle({ color: '#0284C7', weight: 1.5, opacity: 0.35, dashArray: '3, 6' });
       const latLngs = trackCoordinates.map((c) => [c[1], c[0]]);
+      trackPolylineRef.current.setStyle({ color: '#0284C7', weight: 1.5, opacity: 0.35, dashArray: '3, 6' });
       trackPolylineRef.current.setLatLngs(latLngs);
-    }
-    if (trackDotsLayerRef.current && L) {
-      trackDotsLayerRef.current.clearLayers();
-      trackCoordinates.forEach((c, idx) => {
-        if (idx > 0) {
-          L.circleMarker([c[1], c[0]], {
-            radius: 3.5,
-            color: '#0284C7',
-            weight: 1.5,
-            fillColor: '#FFFFFF',
-            fillOpacity: 0.95,
-          }).addTo(trackDotsLayerRef.current);
-        }
-      });
+      const win = window as any;
+      if (trackDotsLayerRef.current && win.L) {
+        trackDotsLayerRef.current.clearLayers();
+        trackCoordinates.forEach((c: any, idx: number) => {
+          if (idx > 0) {
+            win.L.circleMarker([c[1], c[0]], {
+              radius: 3.5,
+              color: '#0284C7',
+              weight: 1.5,
+              fillColor: '#FFFFFF',
+              fillOpacity: 0.95
+            }).addTo(trackDotsLayerRef.current);
+          }
+        });
+      }
     }
     if (userMarkerRef.current) {
       userMarkerRef.current.setLatLng([currentCoords[1], currentCoords[0]]);
@@ -1136,16 +1135,14 @@ export default function KumanoFutureLabOS() {
           setGpsAccuracy(accuracy);
           setLastFixTime(new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
 
-          if (pos.coords.accuracy <= 35) {
-            setTrackCoordinates((prev) => {
-              const last = prev[prev.length - 1];
-              if (last) {
-                const moved = calcDistanceMeters(last[1], last[0], newLngLat[1], newLngLat[0]);
-                if (moved < 3.5) return prev;
-              }
-              return [...prev, newLngLat];
-            });
-          }
+          setTrackCoordinates((prev) => {
+            const last = prev[prev.length - 1];
+            if (pos.coords.accuracy > 35) return prev;
+            if (last && calcDistanceMeters(last[1], last[0], newLngLat[1], newLngLat[0]) < 3.5) {
+              return prev;
+            }
+            return [...prev, newLngLat];
+          });
 
           if (mapInstanceRef.current) {
             mapInstanceRef.current.panTo([newLngLat[1], newLngLat[0]], { animate: true });
