@@ -373,6 +373,8 @@ export default function KumanoFutureLabOS() {
               type: 'raster',
               tiles: ['https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png'],
               tileSize: 256,
+              maxzoom: 18,
+              tileSize: 256,
             },
             // ② 国土地理院 写真（航空写真）
             gsi_photo: {
@@ -487,6 +489,7 @@ export default function KumanoFutureLabOS() {
       });
 
       mapRef.current = map;
+      setTimeout(() => { try { map.resize(); } catch(e){} }, 200);
     }
 
     return () => {
