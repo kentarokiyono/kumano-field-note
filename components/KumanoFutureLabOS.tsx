@@ -392,7 +392,7 @@ export default function KumanoFutureLabOS() {
       // 地図コンテナを傾斜させて鳥瞰パースペクティブを演出
       if (mapContainerRef.current) {
         mapContainerRef.current.style.transition = 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
-        mapContainerRef.current.style.transform = 'perspective(900px) rotateX(25deg) scale(1.04)';
+        mapContainerRef.current.style.transform = 'perspective(1000px) rotateX(32deg) scale(1.42) translateY(-4%)';
       }
       showToast('3D立体起伏ビュー（標高DEM陰影）を表示中');
     } else {
@@ -727,7 +727,7 @@ export default function KumanoFutureLabOS() {
       <audio ref={audioElementRef} onEnded={() => setIsPlayingAudio(false)} />
 
       {/* 地図コンテナ（3D立体パースペクティブ連動） */}
-      <div ref={mapContainerRef} className="w-full h-full z-0 bg-[#F3EFE7] transform-gpu origin-bottom" />
+      <div ref={mapContainerRef} className="w-full h-full z-0 bg-[#F3EFE7] transform-gpu origin-center overflow-hidden" style={{ willChange: "transform" }} />
 
       {/* 上部ヘッダー */}
       <header className="absolute top-0 left-0 right-0 p-2 sm:p-3 pointer-events-none flex flex-col gap-1.5 z-20">
