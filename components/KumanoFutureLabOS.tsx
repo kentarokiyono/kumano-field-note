@@ -384,7 +384,7 @@ export default function KumanoFutureLabOS() {
       if (!reliefLayerRef.current) {
         reliefLayerRef.current = L.tileLayer(
           'https://cyberjapandata.gsi.go.jp/xyz/hillshademap/{z}/{x}/{y}.png',
-          { opacity: 0.55, maxZoom: 16 }
+          { opacity: 0.60, minZoom: 2, maxNativeZoom: 16, maxZoom: 18 }
         );
       }
       reliefLayerRef.current.addTo(map);
